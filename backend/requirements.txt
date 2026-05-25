@@ -1,5 +1,5 @@
-﻿fastapi
-uvicorn
-python-multipart
-nudenet
-Pillow
+﻿fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-multipart>=0.0.9,<1
+nudenet>=3.4,<4
+Pillow>=10,<12

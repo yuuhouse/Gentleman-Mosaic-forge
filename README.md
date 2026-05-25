@@ -1,6 +1,6 @@
 ﻿[English Documentation](./README.en.md)
 
-# 紳士打碼 v2.1.0
+# 紳士打碼 v2.2.0
 
 ![紳士打碼 Logo](./logo-Photoroom.png)
 
@@ -11,8 +11,15 @@
 ![UI Demo](./UI.PNG)
 
 ## 更新資訊
-- 版本：`v2.1.0`
-- 更新日期：`2026-04-01`
+- 版本：`v2.2.0`
+- 更新日期：`2026-05-25`
+
+### v2.2.0 新功能重點：4K 大圖效能升級
+- 針對 4K / 高解析圖片操作重新優化：框選、塗抹、滑鼠 hover 不再反覆重算整張圖片。
+- 效果預覽加入快取機制，只有選區、效果參數或圖片內容改變時才更新，大幅降低拖曳時的卡頓感。
+- Canvas 重繪改用 `requestAnimationFrame` 節流，操作節奏更貼近螢幕刷新率，筆刷移動更順。
+- 大圖歷史紀錄會自動控制快照數量，避免 4K 圖片連續 Undo/Redo 時吃爆記憶體。
+- 仍保留完整解析度輸出：互動變順，不犧牲下載成品品質。
 
 ### v2.1.0 新功能重點
 - 設定面板改為右上角 icon（齒輪）
@@ -58,7 +65,7 @@ venv_dir=.venv
 create_venv=1
 python_cmd=python
 host=127.0.0.1
-port=7300
+port=7400
 reload=0
 auto_install_deps=1
 ```
@@ -67,11 +74,18 @@ auto_install_deps=1
 - `port` 會同步寫入 `runtime-config.js`，前端會使用該埠連線後端。
 - 想關閉後端可設 `enabled=0`（僅做手動打碼編輯）。
 
-## 開發模式（React/Vite）
+## 開發模式（Standalone/Vite）
 ```bash
 npm install
 npm run dev
 ```
+
+開啟：
+```text
+http://localhost:5173/standalone.html
+```
+
+注意：目前正式功能集中在 `standalone.html`。`src/App.jsx` 是早期/簡化 React 版本，沒有批次、NSFW 偵測、海苔、語言與主題設定等完整功能。
 
 ### 打包
 ```bash
@@ -88,6 +102,8 @@ npm run preview
 4. Build Command：`npm run build`
 5. Output Directory：`dist`
 6. Deploy 後即可拿到公開網址。
+
+注意：Vercel/Netlify 只會部署前端靜態檔。NSFW 自動偵測需要本機 `start_app.bat` 啟動的 FastAPI 後端，線上 Demo 不會自動附帶後端推論服務。
 
 ### Netlify
 1. 推送專案到 GitHub。
@@ -115,4 +131,3 @@ npm run preview
 - 第一次啟動會下載 Python 套件，時間較久屬正常。
 - 若 Python 指令不是 `python`，可在 `launch.ini` 調整 `python_cmd`。
 - 批次上限為 30 張，超過會提示並忽略多餘檔案。
-

@@ -1,4 +1,17 @@
-﻿# Change Log
+# Change Log
+
+## [2.2.0] - 2026-05-25
+
+### Performance
+- Optimized 4K/high-resolution image editing by caching effect previews instead of recomputing the full preview on every mouse movement.
+- Throttled interactive canvas redraws with `requestAnimationFrame` for smoother brush, rectangle, hover, and selection feedback.
+- Added adaptive history limits for large images to reduce memory pressure while keeping Undo/Redo available.
+- Preserved full-resolution export quality while reducing interactive editing lag.
+
+### Changed
+- Clarified that `standalone.html` is the production feature surface, while `src/App.jsx` is an older simplified React implementation.
+- Unified local backend configuration around port `7400`.
+- Pinned backend dependency ranges to reduce breakage from future major package updates.
 
 ## [2.1.0] - 2026-04-01
 
