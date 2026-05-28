@@ -5,7 +5,8 @@ rem Project root = this bat file folder (no hardcoded absolute path)
 set "ROOT=%~dp0"
 cd /d "%ROOT%"
 
-set "CFG=launch.ini"
+set "CFG=config\launch.ini"
+if not exist "config" mkdir config
 
 rem defaults
 set "BACKEND_ENABLED=1"
@@ -53,10 +54,10 @@ if exist "%CFG%" (
   echo   ui_lang: "!UI_LANG!",
   echo   ui_theme: "!UI_THEME!"
   echo };
-) > runtime-config.js
+) > config\runtime-config.js
 
 if not "%BACKEND_ENABLED%"=="1" (
-  echo [INFO] Backend disabled in launch.ini
+  echo [INFO] Backend disabled in config\launch.ini
   exit /b 0
 )
 

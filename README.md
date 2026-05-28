@@ -1,25 +1,23 @@
-﻿[English Documentation](./README.en.md)
+﻿# 紳士打碼 v2.3.0
 
-# 紳士打碼 v2.2.0
+**作者**: leeprinxin  
+**GitHub**: https://github.com/leeprinxin  
+**License**: MIT
 
-![紳士打碼 Logo](./logo-Photoroom.png)
-
-## 線上 Demo
-- https://gentleman-mosaic.vercel.app/
+![紳士打碼 Logo](./assets/logo-Photoroom.png)
 
 ## 介面預覽
-![UI Demo](./UI.PNG)
+![UI Demo](./assets/UI.PNG)
 
-## 更新資訊
-- 版本：`v2.2.0`
-- 更新日期：`2026-05-25`
 
-### v2.3.0 預計更新
-- 修改筆刷超出畫布會停止塗抹的問題
-- 修改UI比例讓整體不需要縮放瀏覽器頁面大小就可以看到完整4K圖片全圖
-- 新增批次下載打碼完成的圖片功能
-- 發布2.3.0的release
-- 整理資料夾增加易讀性與降低後續維護複雜度
+
+### v2.3.0 新功能重點
+- 修復筆刷超出畫布時會停止塗抹的問題
+- 調整 UI 比例，讓瀏覽器內可以完整顯示 4K 圖片
+- 新增批次下載已完成打碼圖片功能
+- 整理資料夾結構，提升可讀性與後續維護性
+- 新增 `config/` 與 `assets/`，將 `launch.ini`、`runtime-config.js` 與示意圖片分門別類存放
+- 將 archive 目錄進一步細分為 `archive/legacy` 和 `archive/docs`
 
 ### v2.2.0 新功能重點：4K 大圖效能升級
 - 針對 4K / 高解析圖片操作重新優化：框選、塗抹、滑鼠 hover 不再反覆重算整張圖片。
@@ -59,11 +57,11 @@
 
 ### 一鍵啟動（Standalone）
 1. 進入專案根目錄。
-2. 確認有下列檔案：`start_app.bat`、`launch.ini`、`standalone.html`。
+2. 確認有下列檔案：`start_app.bat`、`config/launch.ini`、`standalone.html`。
 3. 直接雙擊 `start_app.bat`。
 4. 腳本會自動讀取設定、建立 `.venv`、安裝依賴、啟動後端，並開啟 `standalone.html`。
 
-### `launch.ini` 主要設定
+### `config/launch.ini` 主要設定
 ```ini
 [backend]
 enabled=1
@@ -78,7 +76,7 @@ auto_install_deps=1
 ```
 
 說明：
-- `port` 會同步寫入 `runtime-config.js`，前端會使用該埠連線後端。
+- `port` 會同步寫入 `config/runtime-config.js`，前端會使用該埠連線後端。
 - 想關閉後端可設 `enabled=0`（僅做手動打碼編輯）。
 
 ## 開發模式（Standalone/Vite）
@@ -93,37 +91,6 @@ http://localhost:5173/standalone.html
 ```
 
 注意：目前正式功能集中在 `standalone.html`。`src/App.jsx` 是早期/簡化 React 版本，沒有批次、NSFW 偵測、海苔、語言與主題設定等完整功能。
-
-### 打包
-```bash
-npm run build
-npm run preview
-```
-
-## 掛載到線上網頁（部署）
-
-### Vercel（推薦）
-1. 推送專案到 GitHub。
-2. 到 Vercel 匯入該 repo。
-3. Framework 選 `Vite`（已提供 `vercel.json`）。
-4. Build Command：`npm run build`
-5. Output Directory：`dist`
-6. Deploy 後即可拿到公開網址。
-
-注意：Vercel/Netlify 只會部署前端靜態檔。NSFW 自動偵測需要本機 `start_app.bat` 啟動的 FastAPI 後端，線上 Demo 不會自動附帶後端推論服務。
-
-### Netlify
-1. 推送專案到 GitHub。
-2. 到 Netlify 建立 `New site from Git`。
-3. Build command：`npm run build`
-4. Publish directory：`dist`
-5. 已提供 `netlify.toml`，含 SPA fallback（`/* -> /index.html`）。
-
-### 本機先驗證 production build
-```bash
-npm run build
-npm run preview
-```
 
 ## 使用流程
 1. 批次上傳圖片或拖曳圖片到畫布區。

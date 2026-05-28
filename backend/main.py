@@ -25,7 +25,7 @@ MODEL_RESOLUTION = {
 }
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-LAUNCH_INI = ROOT_DIR / "launch.ini"
+LAUNCH_INI = ROOT_DIR / "config" / "launch.ini"
 
 
 class UISettings(BaseModel):
