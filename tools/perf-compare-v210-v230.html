@@ -1,0 +1,174 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Gentleman Mosaic perf compare</title>
+<pre id="out">running...</pre>
+<script>
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+const sizes=[
+  {name:"1080p",w:1920,h:1080},
+  {name:"4K",w:3840,h:2160},
+];
+const iterations={apply:8,render:12,cached:30};
+
+function median(values){
+  const a=values.slice().sort((x,y)=>x-y);
+  return a[Math.floor(a.length/2)];
+}
+function pct(oldMs,newMs){
+  return ((oldMs-newMs)/oldMs)*100;
+}
+function cappedFps(ms){
+  return Math.min(60,1000/ms);
+}
+function fpsDelta(oldFps,newFps){
+  return ((newFps-oldFps)/oldFps)*100;
+}
+function makeSourceImageData(ctx,w,h){
+  const img=ctx.createImageData(w,h);
+  const d=img.data;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      d[i]=(x*13+y*3)&255;
+      d[i+1]=(x*5+y*11)&255;
+      d[i+2]=(x*7+y*17)&255;
+      d[i+3]=255;
+    }
+  }
+  return img;
+}
+function pixelateImageData(src,tileSize){
+  const w=src.width,h=src.height,size=clamp(Math.round(Number(tileSize)||14),1,30);
+  if(size<=1)return new ImageData(new Uint8ClampedArray(src.data),w,h);
+  const srcCanvas=document.createElement("canvas");
+  srcCanvas.width=w;srcCanvas.height=h;
+  const sctx=srcCanvas.getContext("2d",{willReadFrequently:true});
+  sctx.putImageData(src,0,0);
+  const sw=Math.max(1,Math.ceil(w/size)),sh=Math.max(1,Math.ceil(h/size));
+  const small=document.createElement("canvas");
+  small.width=sw;small.height=sh;
+  const mctx=small.getContext("2d",{willReadFrequently:true});
+  mctx.imageSmoothingEnabled=false;
+  mctx.clearRect(0,0,sw,sh);
+  mctx.drawImage(srcCanvas,0,0,w,h,0,0,sw,sh);
+  const out=document.createElement("canvas");
+  out.width=w;out.height=h;
+  const octx=out.getContext("2d",{willReadFrequently:true});
+  octx.imageSmoothingEnabled=false;
+  octx.clearRect(0,0,w,h);
+  octx.drawImage(small,0,0,sw,sh,0,0,w,h);
+  return octx.getImageData(0,0,w,h);
+}
+function makeMask(canvas,rect){
+  const mask=document.createElement("canvas");
+  mask.width=canvas.width;mask.height=canvas.height;
+  const m=mask.getContext("2d",{willReadFrequently:true});
+  m.fillStyle="#fff";
+  m.fillRect(rect.x,rect.y,rect.w,rect.h);
+  return mask;
+}
+function applyByMaskOnContext(targetCtx,targetCanvas,source,mask,rect){
+  targetCtx.putImageData(source,0,0);
+  const mctx=mask.getContext("2d",{willReadFrequently:true});
+  const src=targetCtx.getImageData(rect.x,rect.y,rect.w,rect.h);
+  const sd=src.data;
+  const md=mctx.getImageData(rect.x,rect.y,rect.w,rect.h).data;
+  const out=targetCtx.createImageData(rect.w,rect.h);
+  const od=out.data;
+  const ed=pixelateImageData(src,14).data;
+  for(let i=0;i<md.length;i+=4){
+    const a=md[i+3]/255;
+    if(a<=0){
+      od[i]=sd[i];od[i+1]=sd[i+1];od[i+2]=sd[i+2];od[i+3]=sd[i+3];
+    }else{
+      od[i]=Math.round(sd[i]*(1-a)+ed[i]*a);
+      od[i+1]=Math.round(sd[i+1]*(1-a)+ed[i+1]*a);
+      od[i+2]=Math.round(sd[i+2]*(1-a)+ed[i+2]*a);
+      od[i+3]=sd[i+3];
+    }
+  }
+  targetCtx.putImageData(out,rect.x,rect.y);
+}
+function makeBench(w,h){
+  const canvas=document.createElement("canvas");
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});
+  const preview=document.createElement("canvas");
+  preview.width=220;preview.height=120;
+  const previewCtx=preview.getContext("2d",{willReadFrequently:true});
+  const source=makeSourceImageData(ctx,w,h);
+  const rect={x:Math.floor(w*0.2),y:Math.floor(h*0.2),w:Math.floor(w*0.6),h:Math.floor(h*0.6)};
+  const mask=makeMask(canvas,rect);
+  const after=document.createElement("canvas");
+  after.width=w;after.height=h;
+  const afterCtx=after.getContext("2d",{willReadFrequently:true});
+  function drawPreview(){
+    previewCtx.clearRect(0,0,preview.width,preview.height);
+    previewCtx.drawImage(after,0,0,w,h,0,0,preview.width,preview.height);
+  }
+  return {ctx,source,mask,rect,after,afterCtx,drawPreview};
+}
+function runVersion(bench,version,mode){
+  let previewDirty=true;
+  let lastPreviewCanvas=null;
+  const times=[];
+  const n=mode==="apply"?iterations.apply:(mode==="cached"?iterations.cached:iterations.render);
+  for(let i=0;i<n;i++){
+    const t0=performance.now();
+    if(mode==="apply"){
+      applyByMaskOnContext(bench.ctx,bench.after,bench.source,bench.mask,bench.rect);
+    }else if(mode==="dirty"){
+      bench.afterCtx.putImageData(bench.source,0,0);
+      applyByMaskOnContext(bench.afterCtx,bench.after,bench.source,bench.mask,bench.rect);
+      bench.drawPreview();
+      lastPreviewCanvas=bench.after;
+      previewDirty=false;
+    }else if(version==="2.1.0"){
+      bench.afterCtx.putImageData(bench.source,0,0);
+      applyByMaskOnContext(bench.afterCtx,bench.after,bench.source,bench.mask,bench.rect);
+      bench.drawPreview();
+      lastPreviewCanvas=bench.after;
+    }else{
+      if(previewDirty||!lastPreviewCanvas){
+        bench.afterCtx.putImageData(bench.source,0,0);
+        applyByMaskOnContext(bench.afterCtx,bench.after,bench.source,bench.mask,bench.rect);
+        bench.drawPreview();
+        lastPreviewCanvas=bench.after;
+        previewDirty=false;
+      }
+    }
+    times.push(performance.now()-t0);
+  }
+  return median(times);
+}
+setTimeout(()=>{
+  const rows=[];
+  for(const s of sizes){
+    const apply21=runVersion(makeBench(s.w,s.h),"2.1.0","apply");
+    const apply23=runVersion(makeBench(s.w,s.h),"2.3.0","apply");
+    const dirty21=runVersion(makeBench(s.w,s.h),"2.1.0","dirty");
+    const dirty23=runVersion(makeBench(s.w,s.h),"2.3.0","dirty");
+    const cached21=runVersion(makeBench(s.w,s.h),"2.1.0","cached");
+    const cached23=runVersion(makeBench(s.w,s.h),"2.3.0","cached");
+    const fps21=cappedFps(cached21);
+    const fps23=60;
+    rows.push({
+      case:s.name,
+      apply21:apply21.toFixed(1),
+      apply23:apply23.toFixed(1),
+      applyDelta:pct(apply21,apply23).toFixed(1)+"%",
+      dirtyPreview21:dirty21.toFixed(1),
+      dirtyPreview23:dirty23.toFixed(1),
+      dirtyPreviewDelta:pct(dirty21,dirty23).toFixed(1)+"%",
+      cachedPreview21:cached21.toFixed(1),
+      cachedPreview23:cached23.toFixed(3),
+      cachedPreviewDelta:pct(cached21,cached23).toFixed(1)+"%",
+      cachedPreviewSpeedup:(cached21/cached23).toFixed(1)+"x",
+      uxFps21:fps21.toFixed(1),
+      uxFpsLatest:fps23.toFixed(1),
+      uxFpsDelta:fpsDelta(fps21,fps23).toFixed(1)+"%"
+    });
+  }
+  document.getElementById("out").textContent=JSON.stringify(rows,null,2);
+},50);
+</script>

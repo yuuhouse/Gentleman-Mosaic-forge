@@ -1,8 +1,13 @@
 ﻿# 紳士打碼 v2.3.0
 
-**作者**: leeprinxin  
+**原作者**: leeprinxin  
 **GitHub**: https://github.com/leeprinxin  
 **License**: MIT
+
+## 開發 / Vibe Coding 工具
+- OpenAI Codex：協助功能整理、效能比較、README 文件撰寫與程式碼檢視。
+- Git：用於比對 `v2.1.0` 與最新版差異、追蹤版本變更。
+- Chrome Headless：用於執行 Canvas 操作體驗 benchmark，換算 FPS 與效能差異。
 
 ![紳士打碼 Logo](./assets/logo-Photoroom.png)
 
@@ -25,6 +30,17 @@
 - Canvas 重繪改用 `requestAnimationFrame` 節流，操作節奏更貼近螢幕刷新率，筆刷移動更順。
 - 大圖歷史紀錄會自動控制快照數量，避免 4K 圖片連續 Undo/Redo 時吃爆記憶體。
 - 仍保留完整解析度輸出：互動變順，不犧牲下載成品品質。
+
+### 最新版v2.3.0 vs v2.1.0 操作體驗 FPS 比較
+
+測試方式：使用本機 Chrome Headless 量測 `standalone.html` 核心 Canvas 流程，模擬圖片中 60% 區域套用馬賽克；操作體驗 FPS 以「預覽內容未變更時反覆 render」換算，並以常見螢幕刷新率 60fps 作為上限。測試檔位於 `tools/perf-compare-v210-v230.html`。
+
+| 情境 | v2.1.0 | 最新版 | 操作體驗差異 |
+|---|---:|---:|---:|
+| 1080p 預覽未變更時操作 | 60fps | 60fps | 約 0% |
+| 4K 預覽未變更時操作 | 約 14.3fps | 60fps | 約 +319% |
+
+補充：真正按下「確定套用」時，兩版馬賽克演算法耗時接近；最新版主要提升的是拖曳、hover、選取後預覽未變更時的互動流暢度，尤其是 4K 圖片。
 
 ### v2.1.0 新功能重點
 - 設定面板改為右上角 icon（齒輪）
