@@ -17,6 +17,7 @@
 ### v2.3.2 
 - 本次更新基於最新提交 `02ac597`：Overlay canvas for cursor & live-stroke
 - 新增 overlay canvas，用於游標與即時塗抹筆跡顯示
+- 改善因為2.3.1調整導致的效能下降
   
 ### v2.3.1 
 - 壓縮整體 UI 尺寸，減少側欄、工具列、縮圖列與預覽欄佔用空間
